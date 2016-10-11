@@ -4,6 +4,7 @@ require('dotenv').config()
 var express = require('express');
 var async = require('async');
 var bodyParser = require('body-parser');
+var mondo = require('mondo-bank');
 
 var foursquareClientID = process.env["FOURSQUARE_CLIENT_ID"];
 var foursquareClientSecret = process.env["FOURSQUARE_CLIENT_SECRET"];
@@ -62,17 +63,20 @@ app.post('/hook', function (req, res) {
 
             var beenHere = data.venue.beenHere;
 
-            /*
-             beenHere:
-              { count: 20,
-                unconfirmedCount: 0,
-                marked: true,
-                lastVisitedAt: 1476107751,
-                lastCheckinExpiredAt: 1476118551 }
-                */
+            var icon = data.venue.categories[0].icon;
+            var imageUrl = icon.prefix + '88' + icon.suffix;
+
+            // /*
+            //  beenHere:
+            //   { count: 20,
+            //     unconfirmedCount: 0,
+            //     marked: true,
+            //     lastVisitedAt: 1476107751,
+            //     lastCheckinExpiredAt: 1476118551 }
+            //     */
 
             // check been here before BUT not today / lastCheckinExpired
-            if (false && data.venue.beenHere.count > 0) {
+            if (beenHere.count > 0) {
 
                 foursquare.Checkins.addCheckin(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
 
@@ -82,11 +86,21 @@ app.post('/hook', function (req, res) {
                         console.log("Posted to Swarm:", merchant.name);
                         // create a feed item
                         // var params = {url: 'http://swarmapp.com/c/' + data.checkin.id}
+                        createFeedItemPromise = mondo.createFeedItem({
+                              account_id: process.env["MONZO_ACCOUNT_ID"],
+                              params: {
+                                title: "Checkin @ " + data.checkin.venue.name,
+                                image_url: imageUrl
+                              },
+                              url: data.checkin.venue.canonicalUrl
+                            }, process.env["MONZO_ACCESS_TOKEN"]);
+
                     }
 
                 });
 
             }
+
         });
 
     }
