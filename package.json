@@ -11,8 +11,9 @@
   "dependencies": {
     "async": "^1.5.2",
     "body-parser": "^1.14.2",
+    "dotenv": "^2.0.0",
     "express": "^4.13.4",
-    "mongoose": "^4.3.6",
-    "foursquare": "danieltomlinson/node-foursquare"
+    "foursquare": "clintandrewhall/node-foursquare",
+    "mongoose": "^4.3.6"
   }
 }
