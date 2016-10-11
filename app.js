@@ -1,3 +1,6 @@
+
+require('dotenv').config()
+
 var express = require('express');
 var async = require('async');
 var bodyParser = require('body-parser');
@@ -6,58 +9,92 @@ var foursquareClientID = process.env["FOURSQUARE_CLIENT_ID"];
 var foursquareClientSecret = process.env["FOURSQUARE_CLIENT_SECRET"];
 var foursquareUserToken = process.env["FOURSQUARE_USER_TOKEN"];
 
-var foursquare = require('foursquare')({ "client_id": foursquareClientID, "client_secret": foursquareClientSecret, "v": "20160123" });
-var Venue = foursquare.Venue;
-var port = process.env.PORT || 3000
+var config = {
+  'secrets' : {
+    'clientId' : process.env["FOURSQUARE_CLIENT_ID"],
+    'clientSecret' : process.env["FOURSQUARE_CLIENT_SECRET"],
+    'accessToken' : process.env["FOURSQUARE_USER_TOKEN"],
+    'redirectUrl': 'http://monzo.brokenbricks.org'
+  }
+}
+
+var foursquare = require('node-foursquare')(config);
+
+//var foursquare = require('node-foursquare')({ "client_id": foursquareClientID, "client_secret": foursquareClientSecret, "v": "20160123" });
+
+var Venues = foursquare.Venues;
 
 var app = express();
 app.use(bodyParser.json());
+
+app.get('/', function(req, res) {
+    res.send({"message": "Hello, world!"});
+    return;
+});
 
 app.post('/hook', function (req, res) {
     var body = req.body;
     var type = body.type;
     var data = body.data;
 
-    if (type != "transaction.created") { console.log("Unsupported event type:", type); res.send({}); return; };
+    if (type != "transaction.created") {
+        console.log("Unsupported event type:", type);
+        res.send({"message":"Unsupported event type:", type});
+        return;
+    }
 
     var merchant = body.data.merchant;
-    var online = merchant.online || false;
+
+    if (merchant.online) {
+        console.log("Unsupported transaction: online."); res.send({"message":"Unsupported transaction: online."});
+        return;
+    }
+
+    // if we have a foursquare id, great use that directly
+
     var address = merchant.address;
-    var emoji = merchant.emoji;
 
-    var foursquareShout = emoji;
+    var venue = false;
 
-    if (online != false) { console.log("Unsupported transaction: online."); res.send({}); return; };
-    
-    Venue.find({ radius: 100.0, ll: address.latitude + "," + address.longitude })
-        .then(function(body) {
-            var venues = body
-                .response
-                .venues
-                .map(function(attrs) {
-                    return new Venue( attrs );
-                })
-                .filter(function (venue) {
-                    return venue.attributes.location.postalCode == address.postcode;
+    if (merchant.metadata.foursquare_id) {
+
+        foursquare.Venues.getVenue(merchant.metadata.foursquare_id, foursquareUserToken, function(error, data) {
+
+            var beenHere = data.venue.beenHere;
+
+            /*
+             beenHere:
+              { count: 20,
+                unconfirmedCount: 0,
+                marked: true,
+                lastVisitedAt: 1476107751,
+                lastCheckinExpiredAt: 1476118551 }
+                */
+
+            // check been here before BUT not today / lastCheckinExpired
+            if (false && data.venue.beenHere.count > 0) {
+
+                foursquare.Checkins.addCheckin(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
+
+                    if (error) {
+                        console.log("Error posting to Swarm:", error);
+                    } else {
+                        console.log("Posted to Swarm:", merchant.name);
+                        // create a feed item
+                        // var params = {url: 'http://swarmapp.com/c/' + data.checkin.id}
+                    }
+
                 });
-            
-            if (venues.length == 0) { console.log("Error: No matching venues.", res.send({}); return }
-            
-            var venue = venues[0];
-            venue.accessToken(foursquareUserToken)
-                .checkin({ shout: foursquareShout }, function (error, result) {
-                if (error) {
-                    console.log("Error posting to Swarm:", error);
-                }
-                else {
-                    console.log("Posted to Swarm:", merchant.name);
-                }
-            });
+
+            }
         });
 
-    res.send({});
+    }
+
+    res.send({"message":"done"});
 });
 
+var port = process.env.PORT || 3000;
 app.listen(port, function () {
     console.log('app listening on port:', port);
 });
