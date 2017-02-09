@@ -1,5 +1,5 @@
 
-require('dotenv').config()
+require('dotenv').config();
 
 var express = require('express');
 var async = require('async');
@@ -15,13 +15,11 @@ var config = {
     'clientId' : process.env["FOURSQUARE_CLIENT_ID"],
     'clientSecret' : process.env["FOURSQUARE_CLIENT_SECRET"],
     'accessToken' : process.env["FOURSQUARE_USER_TOKEN"],
-    'redirectUrl': 'http://monzo.brokenbricks.org'
+    'redirectUrl' : process.env["FOURSQUARE_REDIRECT_URI"]
   }
-}
+};
 
 var foursquare = require('node-foursquare')(config);
-
-//var foursquare = require('node-foursquare')({ "client_id": foursquareClientID, "client_secret": foursquareClientSecret, "v": "20160123" });
 
 var Venues = foursquare.Venues;
 
@@ -40,14 +38,15 @@ app.post('/hook', function (req, res) {
 
     if (type != "transaction.created") {
         console.log("Unsupported event type:", type);
-        res.send({"message":"Unsupported event type:", type});
+        res.send({"message":"Unsupported event type:" + type});
         return;
     }
 
     var merchant = body.data.merchant;
 
     if (merchant.online) {
-        console.log("Unsupported transaction: online."); res.send({"message":"Unsupported transaction: online."});
+        console.log("Unsupported transaction: online");
+        res.send({"message":"Unsupported transaction: online"});
         return;
     }
 
@@ -63,9 +62,6 @@ app.post('/hook', function (req, res) {
 
             var beenHere = data.venue.beenHere;
 
-            var icon = data.venue.categories[0].icon;
-            var imageUrl = icon.prefix + '88' + icon.suffix;
-
             // /*
             //  beenHere:
             //   { count: 20,
@@ -78,18 +74,24 @@ app.post('/hook', function (req, res) {
             // check been here before BUT not today / lastCheckinExpired
             if (beenHere.count > 0) {
 
+                // attempt checkin
                 foursquare.Checkins.addCheckin(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
 
                     if (error) {
                         console.log("Error posting to Swarm:", error);
                     } else {
                         console.log("Posted to Swarm:", merchant.name);
-                        // create a feed item
+
+                        // now create a Monzo feed item
+
                         // var params = {url: 'http://swarmapp.com/c/' + data.checkin.id}
+                        var icon = data.venue.categories[0].icon;
+                        var imageUrl = icon.prefix + '88' + icon.suffix;
+
                         createFeedItemPromise = mondo.createFeedItem({
                               account_id: process.env["MONZO_ACCOUNT_ID"],
                               params: {
-                                title: "Checkin @ " + data.checkin.venue.name,
+                                title: "Checked in @ " + data.checkin.venue.name,
                                 image_url: imageUrl
                               },
                               url: data.checkin.venue.canonicalUrl
@@ -99,6 +101,8 @@ app.post('/hook', function (req, res) {
 
                 });
 
+            } else {
+                console.log('No previous checkins here, abort!');
             }
 
         });
