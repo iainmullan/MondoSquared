@@ -6,7 +6,7 @@ Automatically check in on Swarm when you spend money.
 
 	cp .env.example .env
 
-Edit `.env` to include Foursquare API creds
+Edit `.env` to include Foursquare API creds, and (optionally) Monzo API creds
 
 ## Usage
 

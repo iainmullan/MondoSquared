@@ -78,9 +78,6 @@ app.post('/hook', function (req, res) {
 
                 var lastVisit = new Date(beenHere.lastVisitedAt * 1000);
 
-                console.log(lastVisit.toUTCString());
-                console.log(today.toUTCString());
-
                 if (lastVisit.getTime() < today.getTime()) {
 
                     // attempt checkin
@@ -90,6 +87,28 @@ app.post('/hook', function (req, res) {
                             console.log("Error posting to Swarm:", error);
                         } else {
                             console.log("Posted to Swarm:", merchant.name);
+
+                            // now create a Monzo feed item
+                            var icon = data.checkin.venue.categories[0].icon;
+                            var imageUrl = icon.prefix + '88' + icon.suffix;
+
+                            var feedParams = {
+                                account_id: process.env["MONZO_ACCOUNT_ID"],
+                                params: {
+                                    title: "Checked in @ " + data.checkin.venue.name,
+                                    image_url: imageUrl
+                                },
+                                url: 'https://foursquare.com/v/' + data.checkin.venue.id
+                            };
+
+                            mondo.createFeedItem(feedParams, process.env["MONZO_ACCESS_TOKEN"], function(err, value) {
+                                if (err) {
+                                    console.log('error publishing feed item: ' + err);
+                                } else {
+                                    console.log('Feed item has published');
+                                }
+                            });
+
                         }
 
                     });
