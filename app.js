@@ -4,7 +4,6 @@ require('dotenv').config();
 var express = require('express');
 var async = require('async');
 var bodyParser = require('body-parser');
-var mondo = require('mondo-bank');
 
 var foursquareClientID = process.env["FOURSQUARE_CLIENT_ID"];
 var foursquareClientSecret = process.env["FOURSQUARE_CLIENT_SECRET"];
@@ -88,26 +87,33 @@ app.post('/hook', function (req, res) {
                         } else {
                             console.log("Posted to Swarm:", merchant.name);
 
-                            // now create a Monzo feed item
-                            var icon = data.checkin.venue.categories[0].icon;
-                            var imageUrl = icon.prefix + '88' + icon.suffix;
+                            if (process.env["MONZO_ACCOUNT_ID"] && process.env["MONZO_ACCESS_TOKEN"]) {
 
-                            var feedParams = {
-                                account_id: process.env["MONZO_ACCOUNT_ID"],
-                                params: {
-                                    title: "Checked in @ " + data.checkin.venue.name,
-                                    image_url: imageUrl
-                                },
-                                url: 'https://foursquare.com/v/' + data.checkin.venue.id
-                            };
+                                // now create a Monzo feed item
+                                var icon = data.checkin.venue.categories[0].icon;
+                                var imageUrl = icon.prefix + '88' + icon.suffix;
 
-                            mondo.createFeedItem(feedParams, process.env["MONZO_ACCESS_TOKEN"], function(err, value) {
-                                if (err) {
-                                    console.log('error publishing feed item: ' + err);
-                                } else {
-                                    console.log('Feed item has published');
-                                }
-                            });
+                                var feedParams = {
+                                    account_id: process.env["MONZO_ACCOUNT_ID"],
+                                    params: {
+                                        title: "Checked in @ " + data.checkin.venue.name,
+                                        image_url: imageUrl
+                                    },
+                                    url: 'https://foursquare.com/v/' + data.checkin.venue.id
+                                };
+
+                                var mondo = require('mondo-bank');
+                                mondo.createFeedItem(feedParams, process.env["MONZO_ACCESS_TOKEN"], function(err, value) {
+                                    if (err) {
+                                        console.log('Error publishing feed item: ' + err);
+                                    } else {
+                                        console.log('Feed item has published');
+                                    }
+                                });
+
+                            } else {
+                                console.log('Monzo not configured, skip feed item');
+                            }
 
                         }
 
