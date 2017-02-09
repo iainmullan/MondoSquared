@@ -50,26 +50,23 @@ app.post('/hook', function (req, res) {
         return;
     }
 
-    // if we have a foursquare id, great use that directly
-
-    var address = merchant.address;
-
-    var venue = false;
-
+    // First we need a foursquare id
     if (merchant.metadata.foursquare_id) {
 
         foursquare.Venues.getVenue(merchant.metadata.foursquare_id, foursquareUserToken, function(error, data) {
 
-            var beenHere = data.venue.beenHere;
+            /*
+            // Foursquare response contains this block:
+            beenHere: {
+                count: 20,
+                unconfirmedCount: 0,
+                marked: true,
+                lastVisitedAt: 1476107751,
+                lastCheckinExpiredAt: 1476118551
+            }
+            */
 
-            // /*
-            //  beenHere:
-            //   { count: 20,
-            //     unconfirmedCount: 0,
-            //     marked: true,
-            //     lastVisitedAt: 1476107751,
-            //     lastCheckinExpiredAt: 1476118551 }
-            //     */
+            var beenHere = data.venue.beenHere;
 
             // check been here before BUT not today / lastCheckinExpired
             if (beenHere.count > 0) {
@@ -107,6 +104,8 @@ app.post('/hook', function (req, res) {
 
         });
 
+    } else {
+        console.log('No foursquare ID available, abort!');
     }
 
     res.send({"message":"done"});
