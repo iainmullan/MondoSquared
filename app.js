@@ -93,22 +93,6 @@ app.post('/hook', function (req, res) {
                             console.log("Error posting to Swarm:", error);
                         } else {
                             console.log("Posted to Swarm:", merchant.name);
-
-                            // now create a Monzo feed item
-
-                            // var params = {url: 'http://swarmapp.com/c/' + data.checkin.id}
-                            var icon = data.venue.categories[0].icon;
-                            var imageUrl = icon.prefix + '88' + icon.suffix;
-
-                            createFeedItemPromise = mondo.createFeedItem({
-                                  account_id: process.env["MONZO_ACCOUNT_ID"],
-                                  params: {
-                                    title: "Checked in @ " + data.checkin.venue.name,
-                                    image_url: imageUrl
-                                  },
-                                  url: data.checkin.venue.canonicalUrl
-                                }, process.env["MONZO_ACCESS_TOKEN"]);
-
                         }
 
                     });
