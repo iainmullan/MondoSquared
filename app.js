@@ -5,22 +5,17 @@ var express = require('express');
 var async = require('async');
 var bodyParser = require('body-parser');
 
-var foursquareClientID = process.env["FOURSQUARE_CLIENT_ID"];
-var foursquareClientSecret = process.env["FOURSQUARE_CLIENT_SECRET"];
 var foursquareUserToken = process.env["FOURSQUARE_USER_TOKEN"];
 
-var config = {
+var foursquareConfig = {
   'secrets' : {
     'clientId' : process.env["FOURSQUARE_CLIENT_ID"],
     'clientSecret' : process.env["FOURSQUARE_CLIENT_SECRET"],
-    'accessToken' : process.env["FOURSQUARE_USER_TOKEN"],
     'redirectUrl' : process.env["FOURSQUARE_REDIRECT_URI"]
   }
 };
 
-var foursquare = require('node-foursquare')(config);
-
-var Venues = foursquare.Venues;
+var foursquare = require('node-foursquare')(foursquareConfig);
 
 var app = express();
 app.use(bodyParser.json());
