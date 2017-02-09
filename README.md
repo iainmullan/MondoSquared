@@ -1,5 +1,12 @@
 # MonzoSquared
 
+Originally forked from [MondoSquared](https://github.com/DanToml/MondoSquared), with the following updates:
+
+ - uses foursquare_id directly, instead of fuzzy address matching
+ - restrict checkins to 'been here before' and 'not been here today already'
+ - post back to Monzo feed after succesful checkin
+ - config handled using [dotenv](https://www.npmjs.com/package/dotenv)
+
 Automatically check in on Swarm when you spend money.
 
 ## Setup
@@ -29,7 +36,7 @@ Below is a minimal sample payload containing the data used by MonzoSquared. You 
 			}
 		}
 	}
- 
+
 
 Create a webhook in your monzo account with the URL the app is running on. Then get spending!
 

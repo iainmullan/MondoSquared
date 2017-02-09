@@ -7,6 +7,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Daniel Tomlinson",
+  "contributors": [
+    {
+      "name": "Iain Mullan",
+      "email": "iain.mullan@gmail.com"
+    }
+  ],
   "license": "MIT",
   "dependencies": {
     "async": "^1.5.2",
