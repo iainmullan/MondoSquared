@@ -74,32 +74,48 @@ app.post('/hook', function (req, res) {
             // check been here before BUT not today / lastCheckinExpired
             if (beenHere.count > 0) {
 
-                // attempt checkin
-                foursquare.Checkins.addCheckin(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
+                today = new Date();
+                today.setHours(0);
+                today.setMinutes(0);
+                today.setSeconds(0);
 
-                    if (error) {
-                        console.log("Error posting to Swarm:", error);
-                    } else {
-                        console.log("Posted to Swarm:", merchant.name);
+                var lastVisit = new Date(beenHere.lastVisitedAt * 1000);
 
-                        // now create a Monzo feed item
+                console.log(lastVisit.toUTCString());
+                console.log(today.toUTCString());
 
-                        // var params = {url: 'http://swarmapp.com/c/' + data.checkin.id}
-                        var icon = data.venue.categories[0].icon;
-                        var imageUrl = icon.prefix + '88' + icon.suffix;
+                if (lastVisit.getTime() < today.getTime()) {
 
-                        createFeedItemPromise = mondo.createFeedItem({
-                              account_id: process.env["MONZO_ACCOUNT_ID"],
-                              params: {
-                                title: "Checked in @ " + data.checkin.venue.name,
-                                image_url: imageUrl
-                              },
-                              url: data.checkin.venue.canonicalUrl
-                            }, process.env["MONZO_ACCESS_TOKEN"]);
+                    // attempt checkin
+                    foursquare.Checkins.addCheckin(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
 
-                    }
+                        if (error) {
+                            console.log("Error posting to Swarm:", error);
+                        } else {
+                            console.log("Posted to Swarm:", merchant.name);
 
-                });
+                            // now create a Monzo feed item
+
+                            // var params = {url: 'http://swarmapp.com/c/' + data.checkin.id}
+                            var icon = data.venue.categories[0].icon;
+                            var imageUrl = icon.prefix + '88' + icon.suffix;
+
+                            createFeedItemPromise = mondo.createFeedItem({
+                                  account_id: process.env["MONZO_ACCOUNT_ID"],
+                                  params: {
+                                    title: "Checked in @ " + data.checkin.venue.name,
+                                    image_url: imageUrl
+                                  },
+                                  url: data.checkin.venue.canonicalUrl
+                                }, process.env["MONZO_ACCESS_TOKEN"]);
+
+                        }
+
+                    });
+
+                } else {
+                    console.log('Already checked in here today, abort!');
+                }
 
             } else {
                 console.log('No previous checkins here, abort!');
