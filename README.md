@@ -3,7 +3,7 @@
 Originally forked from [MondoSquared](https://github.com/DanToml/MondoSquared), with the following updates:
 
  - config handled using [dotenv](https://www.npmjs.com/package/dotenv)
- - verifies the payload by comparing `account_id` with your config 
+ - verifies the payload by comparing `account_id` with your config
  - uses foursquare_id directly, instead of fuzzy address matching
  - restrict checkins to 'been here before' and 'not been here today already'
  - post back to Monzo feed after succesful checkin (if `MONZO_ACCESS_TOKEN` is set)
@@ -50,4 +50,9 @@ Automatic checkin will happen if all the following are true:
  - The transaction payload received from Monzo contains a `foursquare_id`.
  - The venue is somehwere you've checked in to before.
  - You haven't checked in to this venue so far today (since midnight).
+
+
+## TODO
+
+ - Monzo access token is shortlived, so needs to use refresh tokens in order for the Feed Item feature to be useful
 
