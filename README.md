@@ -2,10 +2,11 @@
 
 Originally forked from [MondoSquared](https://github.com/DanToml/MondoSquared), with the following updates:
 
+ - config handled using [dotenv](https://www.npmjs.com/package/dotenv)
+ - verifies the payload by comparing `account_id` with your config 
  - uses foursquare_id directly, instead of fuzzy address matching
  - restrict checkins to 'been here before' and 'not been here today already'
- - post back to Monzo feed after succesful checkin
- - config handled using [dotenv](https://www.npmjs.com/package/dotenv)
+ - post back to Monzo feed after succesful checkin (if `MONZO_ACCESS_TOKEN` is set)
 
 Automatically check in on Swarm when you spend money.
 
@@ -13,7 +14,7 @@ Automatically check in on Swarm when you spend money.
 
 	cp .env.example .env
 
-Edit `.env` to include Foursquare API creds, and (optionally) Monzo API creds
+Edit `.env` to include Foursquare and Monzo API creds
 
 ## Usage
 
@@ -27,6 +28,7 @@ Below is a minimal sample payload containing the data used by MonzoSquared. You 
 	{
 		"type": "transaction.created",
 		"data": {
+			"account_id": "<your account id>"
 			"merchant": {
 				"online": false,
 				"name": "Hackney Picturehouse",

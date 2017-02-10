@@ -26,9 +26,16 @@ app.get('/', function(req, res) {
 });
 
 app.post('/hook', function (req, res) {
+
     var body = req.body;
     var type = body.type;
     var data = body.data;
+
+    var myAccountId = process.env["MONZO_ACCOUNT_ID"];
+    if (!myAccountId || (data.account_id !== myAccountId)) {
+        res.send({"message": "Monzo Account ID does not match"});
+        return;
+    }
 
     if (type != "transaction.created") {
         console.log("Unsupported event type:", type);
@@ -36,7 +43,7 @@ app.post('/hook', function (req, res) {
         return;
     }
 
-    var merchant = body.data.merchant;
+    var merchant = data.merchant;
 
     if (merchant.online) {
         console.log("Unsupported transaction: online");
@@ -82,7 +89,7 @@ app.post('/hook', function (req, res) {
                         } else {
                             console.log("Posted to Swarm:", merchant.name);
 
-                            if (process.env["MONZO_ACCOUNT_ID"] && process.env["MONZO_ACCESS_TOKEN"]) {
+                            if (process.env["MONZO_ACCESS_TOKEN"]) {
 
                                 // now create a Monzo feed item
                                 var icon = data.checkin.venue.categories[0].icon;
@@ -100,14 +107,15 @@ app.post('/hook', function (req, res) {
                                 var mondo = require('mondo-bank');
                                 mondo.createFeedItem(feedParams, process.env["MONZO_ACCESS_TOKEN"], function(err, value) {
                                     if (err) {
-                                        console.log('Error publishing feed item: ' + err);
+                                        console.log('Error publishing feed item');
+                                        console.log(err);
                                     } else {
                                         console.log('Feed item has published');
                                     }
                                 });
 
                             } else {
-                                console.log('Monzo not configured, skip feed item');
+                                console.log('Monzo token not configured, skip feed item');
                             }
 
                         }
