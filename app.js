@@ -1,6 +1,29 @@
 
 require('dotenv').config();
 
+var origLog = console.log;
+
+console.log = function () {
+    var first_parameter = arguments[0];
+    var other_parameters = Array.prototype.slice.call(arguments, 1);
+
+    function formatConsoleDate (date) {
+        var hour = date.getHours();
+        var minutes = date.getMinutes();
+        var seconds = date.getSeconds();
+
+        return '[' +
+               ((hour < 10) ? '0' + hour: hour) +
+               ':' +
+               ((minutes < 10) ? '0' + minutes: minutes) +
+               ':' +
+               ((seconds < 10) ? '0' + seconds: seconds) +
+               '] ';
+    }
+
+    origLog.apply(console, [formatConsoleDate(new Date()) + first_parameter].concat(other_parameters));
+};
+
 var express = require('express');
 var async = require('async');
 var bodyParser = require('body-parser');
