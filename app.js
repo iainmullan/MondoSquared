@@ -79,6 +79,8 @@ app.post('/hook', function (req, res) {
 
         foursquare.Venues.getVenue(merchant.metadata.foursquare_id, foursquareUserToken, function(error, data) {
 
+            console.log("Transaction detected at: " + merchant.name);
+
             /*
             // Foursquare response contains this block:
             beenHere: {
