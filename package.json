@@ -20,7 +20,8 @@
     "dotenv": "^2.0.0",
     "express": "^4.13.4",
     "foursquare": "clintandrewhall/node-foursquare",
-    "mondo-bank": "^0.1.11",
-    "mongoose": "^4.3.6"
+    "mongoose": "^4.3.6",
+    "monzo-bank": "^0.1.12",
+    "node-foursquare": "^0.4.6"
   }
 }

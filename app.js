@@ -83,7 +83,9 @@ app.post('/checkin', function (req, res) {
     // First we need a foursquare id
     if (merchant.metadata.foursquare_id) {
 
-        foursquare.Venues.getVenue(merchant.metadata.foursquare_id, foursquareUserToken, function(error, data) {
+        console.log('getDetails for ' + merchant.metadata.foursquare_id);
+
+        foursquare.Venues.getDetails(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
 
             console.log("Transaction detected at: " + merchant.name);
 
@@ -113,7 +115,7 @@ app.post('/checkin', function (req, res) {
                 if (lastVisit.getTime() < today.getTime()) {
 
                     // attempt checkin
-                    foursquare.Checkins.addCheckin(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
+                    foursquare.Checkins.add(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
 
                         if (error) {
                             console.log("Error posting to Swarm:", error);
@@ -135,7 +137,7 @@ app.post('/checkin', function (req, res) {
                                     url: 'https://foursquare.com/v/' + data.checkin.venue.id
                                 };
 
-                                var mondo = require('mondo-bank');
+                                var mondo = require('monzo-bank');
                                 mondo.createFeedItem(feedParams, process.env["MONZO_ACCESS_TOKEN"], function(err, value) {
                                     if (err) {
                                         console.log('Error publishing feed item');
