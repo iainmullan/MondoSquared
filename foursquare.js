@@ -1,12 +1,4 @@
-
-require('dotenv').config();
-
-var express = require('express');
-var async = require('async');
-var bodyParser = require('body-parser');
-
 var foursquareUserToken = process.env["FOURSQUARE_USER_TOKEN"];
-
 var foursquareConfig = {
   'secrets' : {
     'clientId' : process.env["FOURSQUARE_CLIENT_ID"],
@@ -14,69 +6,29 @@ var foursquareConfig = {
     'redirectUrl' : process.env["FOURSQUARE_REDIRECT_URI"]
   }
 };
+var foursquareApi = require('node-foursquare')(foursquareConfig);
 
-var foursquare = require('node-foursquare')(foursquareConfig);
+exports.checkTransaction = function(body, callback) {
 
-var app = express();
-app.use(bodyParser.json());
-
-app.get('/', function(req, res) {
-    res.send({"message": "Hello, world!"});
-    return;
-});
-
-app.get('/login', function (req, res) {
-    res.redirect('https://foursquare.com/oauth2/authenticate?' +
-        'client_id=' + foursquareConfig.secrets.clientId +
-        '&response_type=code' +
-        '&redirect_uri=' + foursquareConfig.secrets.redirectUrl
-        )
-});
-
-app.get('/fsq_callback', function (req, res) {
-    var code = req.query['code'];
-
-    foursquare.getAccessToken(
-      {
-        code,
-      },
-      (error, accessToken) => {
-        if (error) {
-          res.send(`An error was thrown: ${error.message}`);
-        } else if (!accessToken) {
-          res.send(`No access token was provided`);
-        } else {
-          // Save access token and continue.
-          res.send(accessToken);
-          foursquareUserToken = accessToken;
-        }
-      });
-
-});
-
-app.post('/checkin', function (req, res) {
-
-    var body = req.body;
     var type = body.type;
-    var data = body.data;
-
-    var myAccountId = process.env["MONZO_ACCOUNT_ID"];
-    if (!myAccountId || (data.account_id !== myAccountId)) {
-        res.send({"message": "Monzo Account ID does not match"});
-        return;
-    }
 
     if (type != "transaction.created") {
-        console.log("Unsupported event type:", type);
-        res.send({"message":"Unsupported event type:" + type});
+        callback({"message":"Unsupported event type:" + type});
         return;
     }
 
-    var merchant = data.merchant;
+    var tx = body.data;
+
+    var myAccountId = process.env["MONZO_ACCOUNT_ID"];
+    if (!myAccountId || (tx.account_id !== myAccountId)) {
+        callback({"message": "Monzo Account ID does not match"});
+        return;
+    }
+
+    var merchant = tx.merchant;
 
     if (merchant.online) {
-        console.log("Unsupported transaction: online");
-        res.send({"message":"Unsupported transaction: online"});
+        callback({"message":"Unsupported transaction: online"});
         return;
     }
 
@@ -85,7 +37,7 @@ app.post('/checkin', function (req, res) {
 
         console.log('getDetails for ' + merchant.metadata.foursquare_id);
 
-        foursquare.Venues.getDetails(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
+        foursquareApi.Venues.getDetails(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, fsqVenue) {
 
             console.log("Transaction detected at: " + merchant.name);
 
@@ -100,7 +52,7 @@ app.post('/checkin', function (req, res) {
             }
             */
 
-            var beenHere = data.venue.beenHere;
+            var beenHere = fsqVenue.venue.beenHere;
 
             // check been here before BUT not today / lastCheckinExpired
             if (beenHere.count > 0) {
@@ -115,7 +67,7 @@ app.post('/checkin', function (req, res) {
                 if (lastVisit.getTime() < today.getTime()) {
 
                     // attempt checkin
-                    foursquare.Checkins.add(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, data) {
+                    foursquareApi.Checkins.add(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, checkinResponse) {
 
                         if (error) {
                             console.log("Error posting to Swarm:", error);
@@ -125,16 +77,16 @@ app.post('/checkin', function (req, res) {
                             if (process.env["MONZO_ACCESS_TOKEN"]) {
 
                                 // now create a Monzo feed item
-                                var icon = data.checkin.venue.categories[0].icon;
+                                var icon = checkinResponse.checkin.venue.categories[0].icon;
                                 var imageUrl = icon.prefix + '88' + icon.suffix;
 
                                 var feedParams = {
                                     account_id: process.env["MONZO_ACCOUNT_ID"],
                                     params: {
-                                        title: "Checked in @ " + data.checkin.venue.name,
+                                        title: "Checked in @ " + checkinResponse.checkin.venue.name,
                                         image_url: imageUrl
                                     },
-                                    url: 'https://foursquare.com/v/' + data.checkin.venue.id
+                                    url: 'https://foursquare.com/v/' + checkinResponse.checkin.venue.id
                                 };
 
                                 var mondo = require('monzo-bank');
@@ -169,10 +121,5 @@ app.post('/checkin', function (req, res) {
         console.log('No foursquare ID available, abort!');
     }
 
-    res.send({"message":"done"});
-});
-
-var port = process.env.PORT || 3000;
-app.listen(port, function () {
-    console.log('app listening on port:', port);
-});
+    callback({"message":"done"});
+};
