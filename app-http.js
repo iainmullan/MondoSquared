@@ -60,5 +60,5 @@ app.get('/fsq_callback', function (req, res) {
 /* start up the server */
 var port = process.env.PORT || 3000;
 app.listen(port, function () {
-    console.log('monzo-sqaured listening on port:', port);
+    console.log('monzo-squared listening on port:', port);
 });
