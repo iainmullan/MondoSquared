@@ -1,3 +1,5 @@
+const request = require('request');
+
 var foursquareUserToken = process.env["FOURSQUARE_USER_TOKEN"];
 var foursquareConfig = {
   'secrets' : {
@@ -10,6 +12,24 @@ var foursquareApi = require('node-foursquare')(foursquareConfig);
 
 var response = {
     message: "(none)"
+};
+
+exports.postToSlack = function(response, callback) {
+    const url = process.env["SLACK_WEBHOOK_URL"];
+
+    if (!url) {
+        callback(response)
+        return
+    }
+
+    request.post(
+      {
+        headers : { 'Content-type' : 'application/json' },
+        url,
+        form : {payload: JSON.stringify({text: response.merchant+': '+response.message})}
+      },
+      (error, res, body) => callback(response)
+    );
 };
 
 exports.checkTransaction = function(body, callback) {

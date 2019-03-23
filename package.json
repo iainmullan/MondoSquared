@@ -16,7 +16,8 @@
   "license": "MIT",
   "dependencies": {
     "monzo-bank": "^0.1.12",
-    "node-foursquare": "^0.4.6"
+    "node-foursquare": "^0.4.6",
+    "request": "^2.88.0"
   },
   "devDependencies": {
     "async": "^1.5.2",

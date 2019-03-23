@@ -16,7 +16,9 @@ app.post('/checkin', function (req, res) {
     var body = req.body;
 
     foursquare.checkTransaction(body, function(response) {
-        res.send(response);
+        foursquare.postToSlack(response, function(response) {
+          res.send(response);
+        });
     });
 
 });
