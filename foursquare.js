@@ -74,35 +74,6 @@ exports.checkTransaction = function(body, callback) {
                         } else {
                             console.log("Posted to Swarm:", merchant.name);
 
-                            if (process.env["MONZO_ACCESS_TOKEN"]) {
-
-                                // now create a Monzo feed item
-                                var icon = checkinResponse.checkin.venue.categories[0].icon;
-                                var imageUrl = icon.prefix + '88' + icon.suffix;
-
-                                var feedParams = {
-                                    account_id: process.env["MONZO_ACCOUNT_ID"],
-                                    params: {
-                                        title: "Checked in @ " + checkinResponse.checkin.venue.name,
-                                        image_url: imageUrl
-                                    },
-                                    url: 'https://foursquare.com/v/' + checkinResponse.checkin.venue.id
-                                };
-
-                                var mondo = require('monzo-bank');
-                                mondo.createFeedItem(feedParams, process.env["MONZO_ACCESS_TOKEN"], function(err, value) {
-                                    if (err) {
-                                        console.log('Error publishing feed item');
-                                        console.log(err);
-                                    } else {
-                                        console.log('Feed item has published');
-                                    }
-                                });
-
-                            } else {
-                                console.log('Monzo token not configured, skip feed item');
-                            }
-
                         }
 
                     });
