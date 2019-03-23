@@ -1,4 +1,4 @@
-var foursquare = require('./foursquare');
+const foursquare = require('./foursquare');
 
 exports.handler = function (event, context, callback) {
 

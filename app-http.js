@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-var foursquare = require('./foursquare');
+const foursquare = require('./foursquare');
 
 /* http setup */
 var express = require('express');

@@ -8,6 +8,10 @@ var foursquareConfig = {
 };
 var foursquareApi = require('node-foursquare')(foursquareConfig);
 
+var response = {
+    message: "(none)"
+};
+
 exports.checkTransaction = function(body, callback) {
 
     var type = body.type;
@@ -31,6 +35,8 @@ exports.checkTransaction = function(body, callback) {
         callback({"message":"Unsupported transaction: online"});
         return;
     }
+
+    response.merchant = merchant.name
 
     // First we need a foursquare id
     if (merchant.metadata.foursquare_id) {
@@ -70,27 +76,31 @@ exports.checkTransaction = function(body, callback) {
                     foursquareApi.Checkins.add(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, checkinResponse) {
 
                         if (error) {
-                            console.log("Error posting to Swarm:", error);
+                            response.message = "Error posting to Swarm";
+                            response.error = error;
+                            callback(response);
                         } else {
-                            console.log("Posted to Swarm:", merchant.name);
-
+                            response.message = "Checked-in 👍";
+                            callback(response);
                         }
 
                     });
 
                 } else {
-                    console.log('Already checked in here today, abort!');
+                    response.message = 'Already checked in here today, abort!';
+                    callback(response);
                 }
 
             } else {
-                console.log('No previous checkins here, abort!');
+                response.message = 'No previous checkins here, abort!';
+                callback(response);
             }
 
         });
 
     } else {
-        console.log('No foursquare ID available, abort!');
+        response.message = 'No foursquare ID available, abort!';
+        callback(response);
     }
 
-    callback({"message":"done"});
 };
