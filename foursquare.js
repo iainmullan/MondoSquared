@@ -92,26 +92,38 @@ exports.checkTransaction = function(body, callback) {
                 today.setMinutes(0);
                 today.setSeconds(0);
 
-                var lastVisit = new Date(beenHere.lastVisitedAt * 1000);
+                // check the tx time is today
+                var txTime = new Date(Date.parse(tx.created));
 
-                if (lastVisit.getTime() < today.getTime()) {
+                if (txTime.getTime() >= today.getTime()) {
 
-                    // attempt checkin
-                    foursquareApi.Checkins.add(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, checkinResponse) {
+                    var lastVisit = new Date(beenHere.lastVisitedAt * 1000);
 
-                        if (error) {
-                            response.message = "Error posting to Swarm";
-                            response.error = error;
-                            callback(response);
-                        } else {
-                            response.message = "Checked-in 👍";
-                            callback(response);
-                        }
+                    if (lastVisit.getTime() < today.getTime()) {
 
-                    });
+                        // attempt checkin
+                        foursquareApi.Checkins.add(merchant.metadata.foursquare_id, {}, foursquareUserToken, function(error, checkinResponse) {
 
+                            if (error) {
+                                response.message = "Error posting to Swarm";
+                                response.error = error;
+                                response.report = true;
+                                callback(response);
+                            } else {
+                                response.message = "Checked-in 👍";
+                                response.report = true;
+                                callback(response);
+                            }
+
+                        });
+
+                    } else {
+                        response.message = 'Already checked in here today, abort!';
+                        response.report = false;
+                        callback(response);
+                    }
                 } else {
-                    response.message = 'Already checked in here today, abort!';
+                    response.message = 'Transaction was not for today, abort!';
                     response.report = true;
                     callback(response);
                 }
