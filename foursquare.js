@@ -18,6 +18,7 @@ exports.postToSlack = function(response, callback) {
 
     if (!response.report) {
         callback(response);
+        return;
     }
 
     const url = process.env["SLACK_WEBHOOK_URL"];
@@ -124,7 +125,7 @@ exports.checkTransaction = function(body, callback) {
                     }
                 } else {
                     response.message = 'Transaction was not for today, abort!';
-                    response.report = true;
+                    response.report = false;
                     callback(response);
                 }
 
