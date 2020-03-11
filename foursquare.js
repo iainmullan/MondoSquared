@@ -15,8 +15,12 @@ var response = {
 };
 
 exports.postToSlack = function(response, callback) {
-    const url = process.env["SLACK_WEBHOOK_URL"];
 
+    if (!response.report) {
+        callback(response);
+    }
+
+    const url = process.env["SLACK_WEBHOOK_URL"];
     if (!url) {
         callback(response)
         return
@@ -37,7 +41,7 @@ exports.checkTransaction = function(body, callback) {
     var type = body.type;
 
     if (type != "transaction.created") {
-        callback({"message":"Unsupported event type:" + type});
+        callback({"message":"Unsupported event type:" + type, report: false});
         return;
     }
 
@@ -45,14 +49,14 @@ exports.checkTransaction = function(body, callback) {
 
     var myAccountId = process.env["MONZO_ACCOUNT_ID"];
     if (!myAccountId || (tx.account_id !== myAccountId)) {
-        callback({"message": "Monzo Account ID does not match"});
+        callback({"message": "Monzo Account ID does not match", report: true});
         return;
     }
 
     var merchant = tx.merchant;
 
     if (merchant.online) {
-        callback({"message":"Unsupported transaction: online"});
+        callback({"message":"Unsupported transaction: online", report: false});
         return;
     }
 
@@ -108,11 +112,13 @@ exports.checkTransaction = function(body, callback) {
 
                 } else {
                     response.message = 'Already checked in here today, abort!';
+                    response.report = true;
                     callback(response);
                 }
 
             } else {
                 response.message = 'No previous checkins here, abort!';
+                response.report = false;
                 callback(response);
             }
 
@@ -120,6 +126,7 @@ exports.checkTransaction = function(body, callback) {
 
     } else {
         response.message = 'No foursquare ID available, abort!';
+        response.report = false;
         callback(response);
     }
 
